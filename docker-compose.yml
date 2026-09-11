@@ -1,0 +1,48 @@
+services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_ALIAS: champion
+      PREDICTION_LOG_PATH: /data/predictions.jsonl
+    ports:
+      - "8000:8000"
+    volumes:
+      - predictions_data:/data
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    environment:
+      PREDICTION_LOG_PATH: /data/predictions.jsonl
+    ports:
+      - "8501:8501"
+    volumes:
+      - predictions_data:/data
+    depends_on:
+      - api
+
+volumes:
+  mlflow_data:
+  predictions_data:
