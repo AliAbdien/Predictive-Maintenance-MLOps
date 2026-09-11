@@ -26,7 +26,7 @@ def log_prediction(features: dict, probability: float, decision: bool, log_path:
     path = Path(log_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with _lock:
-        with path.open("a") as f:
+        with path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")
 
 
@@ -34,5 +34,5 @@ def read_predictions(log_path: str = DEFAULT_LOG_PATH) -> list[dict]:
     path = Path(log_path)
     if not path.exists():
         return []
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
